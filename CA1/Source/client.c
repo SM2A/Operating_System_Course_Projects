@@ -7,8 +7,12 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include "structure.h"
 
 int connectServer(int port) {
+
+    printf("Connection to port %d\n", port);
+
     int fd;
     struct sockaddr_in server_address;
 
@@ -18,30 +22,30 @@ int connectServer(int port) {
     server_address.sin_port = htons(port);
     server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    if (connect(fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) { // checking for errors
-        printf("Error in connecting to server\n");
+    if (connect(fd, (struct sockaddr *) &server_address, sizeof(server_address)) < 0) {
+        printf("Error connecting to server\n");
+        exit(0);
     }
 
     return fd;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
     int fd;
-    char buff[1024] = {0};
+    char buff[BUFFER] = {0};
 
-    fd = connectServer(8080);
-
-    read(0, buff, 1024); // fd = 0 -> stdin
-
-    send(fd, buff, strlen(buff), 0);
+    fd = connectServer(atoi(argv[1]));
 
     recv(fd, buff, 1024, 0);
+    printf("%s", buff);
 
-    printf("Server said: %s\n", buff);
-
-    close(fd);
-
+//    int answer = 0;
+    char response[5];
+//    scanf("%d",answer);
+    read(0, response, 1024);
+//    sprintf(response,"%d",answer);
+    send(fd, response, strlen(response), 0);
 
     return 0;
 }

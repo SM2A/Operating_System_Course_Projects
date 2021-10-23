@@ -1,12 +1,12 @@
 COMPILER=gcc
 SRC=Source
 
-all: client.out server.out
+all: clean client.out server.out
 
-client.out: ${SRC}/client.c
+client.out: ${SRC}/client.c ${SRC}/structure.h
 	${COMPILER} ${SRC}/client.c -o $@
-server.out: ${SRC}/client.c
+server.out: ${SRC}/client.c ${SRC}/structure.h
 	${COMPILER} ${SRC}/server.c -o $@
 
 clean:
-	rm *.out
+	rm -f *.out
