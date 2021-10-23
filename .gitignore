@@ -1,0 +1,4 @@
+CA1/*.out
+CA1/*.exe
+#CA1/CMakeLists.txt
+#CA1/cmake-build-debug
