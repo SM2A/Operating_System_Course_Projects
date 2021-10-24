@@ -8,6 +8,40 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include "structure.h"
+#include <signal.h>
+
+int connectServer(int port);
+void continue_loop(int sig);
+
+int main(int argc, char *argv[]) {
+
+    int fd;
+    int port = atoi(argv[1]);
+    fd = connectServer(port);
+
+    signal(SIGALRM,continue_loop);
+    siginterrupt(SIGALRM, 1);
+
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
+    while (1) {
+        alarm(3);
+        char buff[BUFFER] = {0};
+        recv(fd, buff, 1024, 0);
+        printf("%s", buff);
+
+        alarm(3);
+        char answer[5] = {0};
+        read(0, answer, 1024);
+        send(fd, answer, strlen(answer), 0);
+    }
+#pragma clang diagnostic pop
+
+    return 0;
+}
+
+void continue_loop(int sig){}
 
 int connectServer(int port) {
 
@@ -28,24 +62,4 @@ int connectServer(int port) {
     }
 
     return fd;
-}
-
-int main(int argc, char *argv[]) {
-
-    int fd;
-    char buff[BUFFER] = {0};
-
-    fd = connectServer(atoi(argv[1]));
-
-    recv(fd, buff, 1024, 0);
-    printf("%s", buff);
-
-//    int answer = 0;
-    char response[5];
-//    scanf("%d",answer);
-    read(0, response, 1024);
-//    sprintf(response,"%d",answer);
-    send(fd, response, strlen(response), 0);
-
-    return 0;
 }

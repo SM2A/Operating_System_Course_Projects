@@ -11,21 +11,28 @@
 
 int setupServer(int port);
 int acceptClient(int server_fd);
-int choose_group(int client_fd);
+int choose_group(char buffer[]);
 int add_to_group(int client_fd, int group);
 void start_group(int group);
 
 int port;
+int last_user;
 category rooms[CATEGORY_COUNT];
+user users[50];
 
 int main(int argc, char *argv[]) {
 
     char buffer[BUFFER] = {0};
     fd_set master_set, working_set;
     int server_fd, new_socket, max_sd;
-    category rooms[CATEGORY_COUNT];
 
+    last_user = 0;
     for (int i = 0; i < CATEGORY_COUNT; ++i) rooms[i].index = 0;
+    for (int i = 0; i < CATEGORY_COUNT; ++i) {
+        for (int j = 0; j < CATEGORY_SIZE; ++j) {
+            rooms[i].rooms[j].to_fill = ROOM_SIZE;
+        }
+    }
     port = atoi(argv[1]);
     server_fd = setupServer(port);
 
@@ -35,6 +42,8 @@ int main(int argc, char *argv[]) {
 
     write(1, "Server is running\n", 18);
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
         working_set = master_set;
         select(max_sd + 1, &working_set, NULL, NULL, NULL);
@@ -47,10 +56,14 @@ int main(int argc, char *argv[]) {
                     FD_SET(new_socket, &master_set);
                     if (new_socket > max_sd) max_sd = new_socket;
                     printf("New client with file descriptor %d connected\n", new_socket);
+
+                    sprintf(buffer, "Hello from server, you're client %d\nPlease choose your category :\n"
+                                    "1 - Computer\n2 - Electric\n3 - Civil\n4 - Mechanic\n", new_socket);
                     send(new_socket, buffer, strlen(buffer), 0);
-                    int gp = choose_group(new_socket);
-                    int gp_s = add_to_group(new_socket,gp);
-                    if (gp_s) start_group(gp);
+
+                    users[last_user].stage = CHOOSE_GROUP;
+                    users[last_user].fd = new_socket;
+                    last_user++;
                 } else {
                     int bytes_received;
                     bytes_received = recv(i, buffer, BUFFER, 0);
@@ -61,13 +74,32 @@ int main(int argc, char *argv[]) {
                         FD_CLR(i, &master_set);
                         continue;
                     }
+                    for (int j = 0; j < 50; ++j) {
+                        if (users[j].fd == i) {
+                            if (users[j].stage == CHOOSE_GROUP) {
+                                int gp = choose_group(buffer);
+                                int gp_s = add_to_group(i, gp);
+                                users[j].stage = WAITING_START;
+                                users[j].group_category = gp;
+                                if (gp_s) start_group(gp);
+                            } else if (users[j].stage == WAITING_START) {
 
-                    printf("Client %d : %s", i, buffer);
-                    memset(buffer, 0, BUFFER);
+                            } else if (users[j].stage == IN_CHAT) {
+
+                            } else if (users[j].stage == DONE) {
+
+                            } else {
+                                printf("Client %d : %s", i, buffer);
+                                memset(buffer, 0, BUFFER);
+                            }
+                            break;
+                        }
+                    }
                 }
             }
         }
     }
+#pragma clang diagnostic pop
     return 0;
 }
 
@@ -79,9 +111,9 @@ int acceptClient(int server_fd) {
     return client_fd;
 }
 
-int setupServer(int port) {
+int setupServer(int s_port) {
 
-    printf("Starting server on port %d\n", port);
+    printf("Starting server on port %d\n", s_port);
 
     struct sockaddr_in address;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,7 +122,7 @@ int setupServer(int port) {
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(port);
+    address.sin_port = htons(s_port);
 
     bind(server_fd, (struct sockaddr *) &address, sizeof(address));
     listen(server_fd, 10);
@@ -98,34 +130,35 @@ int setupServer(int port) {
     return server_fd;
 }
 
-int choose_group(int client_fd) {
-    char buffer[BUFFER] = {0};
-    sprintf(buffer, "Hello from server, you're client %d\nPlease choose your category :\n"
-                    "1 - Computer\n2 - Electric\n3 - Civil\n4 - Mechanic\n", client_fd);
-
-    send(client_fd, buffer, strlen(buffer), 0);
-
-    char response[10] = {0};
-    recv(client_fd, response, BUFFER, 0);
-
-    return atoi(response) - 1;
-//    return COMPUTER;
+int choose_group(char buffer[]) {
+    return atoi(buffer) - 1;
 }
 
 int add_to_group(int client_fd, int group) {
-    rooms[group].rooms[rooms[group].index].users[rooms[group].rooms[rooms[group].index].to_fill-1] = client_fd;
-    rooms[group].rooms[rooms[group].index].to_fill--;
-    rooms[group].index++;
-    return rooms[group].rooms[rooms[group].index].to_fill == 0;
+    room current = rooms[group].rooms[rooms[group].index];
+    current.users[current.to_fill - 1] = client_fd;
+    current.to_fill--;
+    rooms[group].rooms[rooms[group].index] = current;
+    if (current.to_fill == 0) return 1;
+    else {
+        char buffer[BUFFER] = {0};
+        sprintf(buffer, "Please wait until your group is full\n");
+        send(client_fd, buffer, strlen(buffer), 0);
+        return 0;
+    }
 }
 
-void start_group(int group){
+void start_group(int group) {
     port++;
-    rooms[group].rooms[rooms[group].index-1].port = port;
+    room current = rooms[group].rooms[rooms[group].index];
+    current.port = port;
     char port_str[10];
-    sprintf(port_str,"%d",port);
-
-    for (int i = 0; i < ROOM_SIZE ; ++i) {
-        send(rooms[group].rooms[rooms[group].index-1].users[i],port_str,strlen(port_str),0);
+    sprintf(port_str, "%d", port);
+    for (int i = 0; i < ROOM_SIZE; ++i) {
+        char buffer[BUFFER] = {0};
+        sprintf(buffer, "Your chat is starting\n");
+        send(current.users[i], buffer, strlen(buffer), 0);
+        send(current.users[i], port_str, strlen(port_str), 0);
     }
+    rooms[group].index++;
 }

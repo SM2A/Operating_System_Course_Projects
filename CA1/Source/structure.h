@@ -9,6 +9,10 @@
 #define ELECTRICAL 1
 #define CIVIL 2
 #define MECHANIC 3
+#define CHOOSE_GROUP 0
+#define WAITING_START 1
+#define IN_CHAT 2
+#define DONE 3
 
 struct question_and_answer{
     char question[BUFFER];
@@ -16,8 +20,14 @@ struct question_and_answer{
 };
 typedef struct question_and_answer q_and_a;
 
+struct client{
+    int group_category;
+    int stage;
+    int fd;
+};
+typedef struct client user;
+
 struct room_data{
-//    int id;
     int port;
     int to_fill;
     int users[ROOM_SIZE];
