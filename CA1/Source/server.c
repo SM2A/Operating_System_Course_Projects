@@ -153,12 +153,13 @@ void start_group(int group) {
     room current = rooms[group].rooms[rooms[group].index];
     current.port = port;
     char port_str[10];
-    sprintf(port_str, "%d", port);
+    sprintf(port_str, "%d\n", port);
+    char buffer[BUFFER] = {0};
+    sprintf(buffer, "Your chat is starting\n");
     for (int i = 0; i < ROOM_SIZE; ++i) {
-        char buffer[BUFFER] = {0};
-        sprintf(buffer, "Your chat is starting\n");
         send(current.users[i], buffer, strlen(buffer), 0);
         send(current.users[i], port_str, strlen(port_str), 0);
+//        printf("%d %s %s\n",current.users[i],buffer,port_str);
     }
     rooms[group].index++;
 }

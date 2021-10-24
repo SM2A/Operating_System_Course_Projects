@@ -12,14 +12,15 @@
 
 int connectServer(int port);
 void continue_loop(int sig);
+void chat_room(int port);
 
 int main(int argc, char *argv[]) {
 
     int fd;
-    int port = atoi(argv[1]);
-    fd = connectServer(port);
+    int server_port = atoi(argv[1]);
+    fd = connectServer(server_port);
 
-    signal(SIGALRM,continue_loop);
+    signal(SIGALRM, continue_loop);
     siginterrupt(SIGALRM, 1);
 
 
@@ -29,7 +30,16 @@ int main(int argc, char *argv[]) {
         alarm(3);
         char buff[BUFFER] = {0};
         recv(fd, buff, 1024, 0);
-        printf("%s", buff);
+        char indicator[25] = {0};
+        sprintf(indicator,"Your chat is starting\n");
+        if (strcmp(buff,indicator ) == 0) {
+            alarm(0);
+            printf("%s", buff);
+//            memset(buff, 0, BUFFER);
+            char chat_port[10] = {0};
+            recv(fd, chat_port, 10, 0);
+            chat_room(atoi(chat_port));
+        } else printf("%s", buff);
 
         alarm(3);
         char answer[5] = {0};
@@ -41,7 +51,7 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void continue_loop(int sig){}
+void continue_loop(int sig) {}
 
 int connectServer(int port) {
 
@@ -62,4 +72,11 @@ int connectServer(int port) {
     }
 
     return fd;
+}
+
+void chat_room(int port) {
+
+    for (int i = 0; i < 5; ++i) {
+        printf("chatting in port %d\n",port);
+    }
 }
