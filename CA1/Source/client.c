@@ -13,7 +13,7 @@
 int connectServer(int port);
 void continue_loop(int sig);
 void turn(int sig);
-void chat_room(int port, int my_fd);
+void chat_room(int port, int my_fd, int server_fd);
 int receive_port(const char input[]);
 int get_port(const char input[]);
 int get_users(const char input[]);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
             alarm(0);
             int chat_port = get_port(buff);
             int me = get_users(buff);
-            chat_room(chat_port, me);
+            chat_room(chat_port, me, fd);
             return 0;
         } else printf("%s", buff);
 
@@ -113,7 +113,7 @@ int get_users(const char input[]) {
     return contacts[ROOM_SIZE];
 }
 
-void chat_room(int port, int my_fd) {
+void chat_room(int port, int my_fd, int server_fd) {
 
     int broadcast = 1, opt = 1;
     struct sockaddr_in bc_address;
@@ -136,50 +136,66 @@ void chat_room(int port, int my_fd) {
     for (int j = 0; j < ROOM_SIZE; ++j) {
         if (my_fd == contacts[j]) {
             printf("It's your turn . Ask your question\n");
-            alarm(60);
+//            alarm(TURN_TIMER);
             char question[BUFFER] = {0};
             read(0, question, BUFFER);
-            alarm(0);
+//            alarm(0);
             sendto(sock, question, strlen(question), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
             char temp[BUFFER] = {0};
             recv(sock, temp, 1024, 0);
             for (int k = 0; k < ROOM_SIZE - 1; ++k) {
+//                alarm(TURN_TIMER);
                 char buffer[BUFFER] = {0};
                 recv(sock, buffer, 1024, 0);
-                printf("%s", buffer);
+                printf("%d : %s", k + 1, buffer);
+//                alarm(0);
             }
+            printf("Please choose best answer\n");
+            char best_answer[10] = {0};
+            read(0, best_answer, BUFFER);
+            char buffer[BUFFER] = {0};
+            sprintf(buffer, "Best answer is %s\n", best_answer);
+            sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+            recv(sock, temp, 1024, 0);
         } else {
             if (contacts[(j + 1) % (ROOM_SIZE - 1)] == my_fd) {
-                for (int k = 0; k < ROOM_SIZE; ++k) {
-                    if (k % 2 == 1) {
+                for (int k = 0; k < ROOM_SIZE + 1; ++k) {
+                    if (k == 1) {
                         printf("It's your turn . Answer question\n");
-                        alarm(60);
+//                        alarm(TURN_TIMER);
                         char answer[BUFFER] = {0};
                         read(0, answer, BUFFER);
-                        alarm(0);
+//                        alarm(0);
                         sendto(sock, answer, strlen(answer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
                         char temp[BUFFER] = {0};
                         recv(sock, temp, 1024, 0);
                     } else {
+//                        alarm(TURN_TIMER);
                         char buffer[BUFFER] = {0};
                         recv(sock, buffer, 1024, 0);
                         printf("%s", buffer);
+//                        alarm(0);
                     }
                 }
             } else {
-                for (int k = 0; k < ROOM_SIZE - 1; ++k) {
-                    char buffer[BUFFER] = {0};
-                    recv(sock, buffer, 1024, 0);
-                    printf("%s", buffer);
+                for (int k = 0; k < ROOM_SIZE + 1; ++k) {
+                    if (k == 2) {
+                        printf("It's your turn . Answer question\n");
+//                        alarm(TURN_TIMER);
+                        char answer[BUFFER] = {0};
+                        read(0, answer, BUFFER);
+//                        alarm(0);
+                        sendto(sock, answer, strlen(answer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+                        char temp[BUFFER] = {0};
+                        recv(sock, temp, 1024, 0);
+                    } else {
+//                        alarm(TURN_TIMER);
+                        char buffer[BUFFER] = {0};
+                        recv(sock, buffer, 1024, 0);
+                        printf("%s", buffer);
+//                        alarm(0);
+                    }
                 }
-                printf("It's your turn . Answer question\n");
-                alarm(60);
-                char answer[BUFFER] = {0};
-                read(0, answer, BUFFER);
-                alarm(0);
-                sendto(sock, answer, strlen(answer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
-                char temp[BUFFER] = {0};
-                recv(sock, temp, 1024, 0);
             }
         }
     }
