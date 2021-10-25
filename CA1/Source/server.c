@@ -10,15 +10,10 @@
 #include "structure.h"
 
 int setupServer(int port);
-
 int acceptClient(int server_fd);
-
 int choose_group(char buffer[]);
-
 int add_to_group(int client_fd, int group);
-
 void start_group(int group);
-
 int find_user(int fd);
 
 int port;
@@ -89,9 +84,11 @@ int main(int argc, char *argv[]) {
                         sprintf(buffer, "Please wait ...\n");
                         send(i, buffer, strlen(buffer), 0);
                     } else if (users[find_user(i)].stage == IN_CHAT) {
-
-                    } else if (users[find_user(i)].stage == DONE) {
-
+                        int qa_file = open("QA.txt", O_APPEND | O_RDWR);
+                        if (qa_file < 0) qa_file = open("QA.txt", O_CREAT | O_RDWR);
+                        write(qa_file, buffer, strlen(buffer));
+                        close(qa_file);
+                        memset(buffer, 0, BUFFER);
                     } else {
                         printf("Client %d : %s", i, buffer);
                         memset(buffer, 0, BUFFER);
@@ -165,7 +162,7 @@ void start_group(int group) {
     for (int i = 0; i < ROOM_SIZE; ++i) {
         char buffer[BUFFER] = {0};
         sprintf(buffer, "$YCISOP$#%d#*%d*%d*%d*%d*\n",
-                port,current.users[0],current.users[1],current.users[2],current.users[i]);
+                port, current.users[0], current.users[1], current.users[2], current.users[i]);
         send(current.users[i], buffer, strlen(buffer), 0);
         users[find_user(current.users[i])].stage = IN_CHAT;
         printf("Port %d transmitted to client %d \n", port, current.users[i]);

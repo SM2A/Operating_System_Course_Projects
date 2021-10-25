@@ -17,6 +17,7 @@ void chat_room(int port, int my_fd, int server_fd);
 int receive_port(const char input[]);
 int get_port(const char input[]);
 int get_users(const char input[]);
+void send_qa(char qa[3][BUFFER], int server_fd, int best_answer);
 
 int contacts[ROOM_SIZE + 1];
 
@@ -134,20 +135,21 @@ void chat_room(int port, int my_fd, int server_fd) {
     printf("Your chat room is ready\n");
 
     for (int j = 0; j < ROOM_SIZE; ++j) {
+        char qa[3][BUFFER] = {0, 0, 0};
         if (my_fd == contacts[j]) {
             printf("It's your turn . Ask your question\n");
 //            alarm(TURN_TIMER);
-            char question[BUFFER] = {0};
-            read(0, question, BUFFER);
+//            char question[BUFFER] = {0};
+            read(0, qa[0], BUFFER);
 //            alarm(0);
-            sendto(sock, question, strlen(question), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+            sendto(sock, qa[0], strlen(qa[0]), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
             char temp[BUFFER] = {0};
             recv(sock, temp, 1024, 0);
             for (int k = 0; k < ROOM_SIZE - 1; ++k) {
 //                alarm(TURN_TIMER);
-                char buffer[BUFFER] = {0};
-                recv(sock, buffer, 1024, 0);
-                printf("%d : %s", k + 1, buffer);
+//                char buffer[BUFFER] = {0};
+                recv(sock, qa[k + 1], 1024, 0);
+                printf("%d : %s", k + 1, qa[k + 1]);
 //                alarm(0);
             }
             printf("Please choose best answer\n");
@@ -157,6 +159,7 @@ void chat_room(int port, int my_fd, int server_fd) {
             sprintf(buffer, "Best answer is %s\n", best_answer);
             sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
             recv(sock, temp, 1024, 0);
+            send_qa(qa, server_fd, atoi(best_answer));
         } else {
             if (contacts[(j + 1) % (ROOM_SIZE - 1)] == my_fd) {
                 for (int k = 0; k < ROOM_SIZE + 1; ++k) {
@@ -199,4 +202,16 @@ void chat_room(int port, int my_fd, int server_fd) {
             }
         }
     }
+    printf("Good Bye\n");
+}
+
+void send_qa(char qa[3][BUFFER], int server_fd, int best_answer) {
+    int end = strlen(qa[best_answer]) - 1;
+    qa[best_answer][end] = ' ';
+    qa[best_answer][end + 1] = '*';
+    qa[best_answer][end + 2] = '\n';
+
+    char qa_str[BUFFER] = {0};
+    sprintf(qa_str, "%s%s%s\n", qa[0], qa[1], qa[2]);
+    send(server_fd, qa_str, strlen(qa_str), 0);
 }
