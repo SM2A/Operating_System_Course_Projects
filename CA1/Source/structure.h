@@ -5,10 +5,10 @@
 #define ROOM_SIZE 3
 #define CATEGORY_SIZE 10
 #define CATEGORY_COUNT 4
-#define COMPUTER 0
+/*#define COMPUTER 0
 #define ELECTRICAL 1
 #define CIVIL 2
-#define MECHANIC 3
+#define MECHANIC 3*/
 #define CHOOSE_GROUP 0
 #define WAITING_START 1
 #define IN_CHAT 2

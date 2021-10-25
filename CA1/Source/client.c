@@ -12,22 +12,22 @@
 
 int connectServer(int port);
 void continue_loop(int sig);
-void chat_room(int port);
+void turn(int sig);
+void chat_room(int port, int my_fd);
 int receive_port(const char input[]);
 int get_port(const char input[]);
+int get_users(const char input[]);
+
+int contacts[ROOM_SIZE + 1];
 
 int main(int argc, char *argv[]) {
 
-    int fd;
     int server_port = atoi(argv[1]);
-    fd = connectServer(server_port);
+    int fd = connectServer(server_port);
 
     signal(SIGALRM, continue_loop);
     siginterrupt(SIGALRM, 1);
 
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
         alarm(3);
         char buff[BUFFER] = {0};
@@ -35,7 +35,9 @@ int main(int argc, char *argv[]) {
         if (receive_port(buff) == 1) {
             alarm(0);
             int chat_port = get_port(buff);
-            chat_room(chat_port);
+            int me = get_users(buff);
+            chat_room(chat_port, me);
+            return 0;
         } else printf("%s", buff);
 
         alarm(3);
@@ -43,12 +45,16 @@ int main(int argc, char *argv[]) {
         read(0, answer, 1024);
         send(fd, answer, strlen(answer), 0);
     }
-#pragma clang diagnostic pop
 
     return 0;
 }
 
 void continue_loop(int sig) {}
+
+
+void turn(int sig) {
+    printf("Your turn is over\n");
+}
 
 int connectServer(int port) {
 
@@ -90,9 +96,91 @@ int get_port(const char input[]) {
     return cp;
 }
 
-void chat_room(int port) {
+int get_users(const char input[]) {
+    int cu = 0;
+    for (int i = 0; i < strlen(input); ++i) {
+        if (input[i] == '*') {
+            int ufd = 0;
+            for (int j = i + 1; input[j] != '*'; i++, j++) {
+                ufd += input[j] - 48;
+                ufd *= 10;
+            }
+            ufd /= 10;
+            contacts[cu] = ufd;
+            cu++;
+        }
+    }
+    return contacts[ROOM_SIZE];
+}
 
-    for (int i = 0; i < 5; ++i) {
-        printf("chatting in port %d\n", port);
+void chat_room(int port, int my_fd) {
+
+    int broadcast = 1, opt = 1;
+    struct sockaddr_in bc_address;
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+
+    bc_address.sin_family = AF_INET;
+    bc_address.sin_port = htons(port);
+    bc_address.sin_addr.s_addr = inet_addr("192.168.1.255");
+
+    bind(sock, (struct sockaddr *) &bc_address, sizeof(bc_address));
+
+    signal(SIGALRM, turn);
+    siginterrupt(SIGALRM, 1);
+
+    printf("Your chat room is ready\n");
+
+    for (int j = 0; j < ROOM_SIZE; ++j) {
+        if (my_fd == contacts[j]) {
+            printf("It's your turn . Ask your question\n");
+            alarm(60);
+            char question[BUFFER] = {0};
+            read(0, question, BUFFER);
+            alarm(0);
+            sendto(sock, question, strlen(question), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+            char temp[BUFFER] = {0};
+            recv(sock, temp, 1024, 0);
+            for (int k = 0; k < ROOM_SIZE - 1; ++k) {
+                char buffer[BUFFER] = {0};
+                recv(sock, buffer, 1024, 0);
+                printf("%s", buffer);
+            }
+        } else {
+            if (contacts[(j + 1) % (ROOM_SIZE - 1)] == my_fd) {
+                for (int k = 0; k < ROOM_SIZE; ++k) {
+                    if (k % 2 == 1) {
+                        printf("It's your turn . Answer question\n");
+                        alarm(60);
+                        char answer[BUFFER] = {0};
+                        read(0, answer, BUFFER);
+                        alarm(0);
+                        sendto(sock, answer, strlen(answer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+                        char temp[BUFFER] = {0};
+                        recv(sock, temp, 1024, 0);
+                    } else {
+                        char buffer[BUFFER] = {0};
+                        recv(sock, buffer, 1024, 0);
+                        printf("%s", buffer);
+                    }
+                }
+            } else {
+                for (int k = 0; k < ROOM_SIZE - 1; ++k) {
+                    char buffer[BUFFER] = {0};
+                    recv(sock, buffer, 1024, 0);
+                    printf("%s", buffer);
+                }
+                printf("It's your turn . Answer question\n");
+                alarm(60);
+                char answer[BUFFER] = {0};
+                read(0, answer, BUFFER);
+                alarm(0);
+                sendto(sock, answer, strlen(answer), 0, (struct sockaddr *) &bc_address, sizeof(bc_address));
+                char temp[BUFFER] = {0};
+                recv(sock, temp, 1024, 0);
+            }
+        }
     }
 }

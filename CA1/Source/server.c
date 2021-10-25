@@ -162,9 +162,10 @@ void start_group(int group) {
     room current = rooms[group].rooms[rooms[group].index];
     current.port = port;
     printf("New chat in group %d started\n", group);
-    char buffer[BUFFER] = {0};
-    sprintf(buffer, "$YCISOP$#%d#\n", port);
     for (int i = 0; i < ROOM_SIZE; ++i) {
+        char buffer[BUFFER] = {0};
+        sprintf(buffer, "$YCISOP$#%d#*%d*%d*%d*%d*\n",
+                port,current.users[0],current.users[1],current.users[2],current.users[i]);
         send(current.users[i], buffer, strlen(buffer), 0);
         users[find_user(current.users[i])].stage = IN_CHAT;
         printf("Port %d transmitted to client %d \n", port, current.users[i]);
