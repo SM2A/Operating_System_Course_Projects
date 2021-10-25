@@ -10,10 +10,16 @@
 #include "structure.h"
 
 int setupServer(int port);
+
 int acceptClient(int server_fd);
+
 int choose_group(char buffer[]);
+
 int add_to_group(int client_fd, int group);
+
 void start_group(int group);
+
+int find_user(int fd);
 
 int port;
 int last_user;
@@ -22,7 +28,6 @@ user users[50];
 
 int main(int argc, char *argv[]) {
 
-    char buffer[BUFFER] = {0};
     fd_set master_set, working_set;
     int server_fd, new_socket, max_sd;
 
@@ -50,7 +55,7 @@ int main(int argc, char *argv[]) {
 
         for (int i = 0; i <= max_sd; i++) {
             if (FD_ISSET(i, &working_set)) {
-
+                char buffer[BUFFER] = {0};
                 if (i == server_fd) {
                     new_socket = acceptClient(server_fd);
                     FD_SET(new_socket, &master_set);
@@ -74,26 +79,22 @@ int main(int argc, char *argv[]) {
                         FD_CLR(i, &master_set);
                         continue;
                     }
-                    for (int j = 0; j < 50; ++j) {
-                        if (users[j].fd == i) {
-                            if (users[j].stage == CHOOSE_GROUP) {
-                                int gp = choose_group(buffer);
-                                int gp_s = add_to_group(i, gp);
-                                users[j].stage = WAITING_START;
-                                users[j].group_category = gp;
-                                if (gp_s) start_group(gp);
-                            } else if (users[j].stage == WAITING_START) {
+                    if (users[find_user(i)].stage == CHOOSE_GROUP) {
+                        int gp = choose_group(buffer);
+                        int gp_s = add_to_group(i, gp);
+                        users[find_user(i)].stage = WAITING_START;
+                        users[find_user(i)].group_category = gp;
+                        if (gp_s) start_group(gp);
+                    } else if (users[find_user(i)].stage == WAITING_START) {
+                        sprintf(buffer, "Please wait ...\n");
+                        send(i, buffer, strlen(buffer), 0);
+                    } else if (users[find_user(i)].stage == IN_CHAT) {
 
-                            } else if (users[j].stage == IN_CHAT) {
+                    } else if (users[find_user(i)].stage == DONE) {
 
-                            } else if (users[j].stage == DONE) {
-
-                            } else {
-                                printf("Client %d : %s", i, buffer);
-                                memset(buffer, 0, BUFFER);
-                            }
-                            break;
-                        }
+                    } else {
+                        printf("Client %d : %s", i, buffer);
+                        memset(buffer, 0, BUFFER);
                     }
                 }
             }
@@ -148,18 +149,26 @@ int add_to_group(int client_fd, int group) {
     }
 }
 
+int find_user(int fd) {
+    for (int i = 0; i < 50; ++i) {
+        if (users[i].fd == fd)
+            return i;
+    }
+    return -1;
+}
+
 void start_group(int group) {
     port++;
     room current = rooms[group].rooms[rooms[group].index];
     current.port = port;
-    char port_str[10];
-    sprintf(port_str, "%d\n", port);
+    printf("New chat in group %d started\n", group);
     char buffer[BUFFER] = {0};
-    sprintf(buffer, "Your chat is starting\n");
+    sprintf(buffer, "$YCISOP$#%d#\n", port);
     for (int i = 0; i < ROOM_SIZE; ++i) {
         send(current.users[i], buffer, strlen(buffer), 0);
-        send(current.users[i], port_str, strlen(port_str), 0);
-//        printf("%d %s %s\n",current.users[i],buffer,port_str);
+        users[find_user(current.users[i])].stage = IN_CHAT;
+        printf("Port %d transmitted to client %d \n", port, current.users[i]);
     }
+
     rooms[group].index++;
 }

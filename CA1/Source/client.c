@@ -13,6 +13,8 @@
 int connectServer(int port);
 void continue_loop(int sig);
 void chat_room(int port);
+int receive_port(const char input[]);
+int get_port(const char input[]);
 
 int main(int argc, char *argv[]) {
 
@@ -30,15 +32,10 @@ int main(int argc, char *argv[]) {
         alarm(3);
         char buff[BUFFER] = {0};
         recv(fd, buff, 1024, 0);
-        char indicator[25] = {0};
-        sprintf(indicator,"Your chat is starting\n");
-        if (strcmp(buff,indicator ) == 0) {
+        if (receive_port(buff) == 1) {
             alarm(0);
-            printf("%s", buff);
-//            memset(buff, 0, BUFFER);
-            char chat_port[10] = {0};
-            recv(fd, chat_port, 10, 0);
-            chat_room(atoi(chat_port));
+            int chat_port = get_port(buff);
+            chat_room(chat_port);
         } else printf("%s", buff);
 
         alarm(3);
@@ -74,9 +71,28 @@ int connectServer(int port) {
     return fd;
 }
 
+int receive_port(const char input[]) {
+    int i;
+    char indicator[8] = "$YCISOP$";
+    for (i = 0; (i < strlen(input)) && (i < 8); ++i)
+        if (input[i] != indicator[i]) return 0;
+    if (i == 8) return 1;
+    else return 0;
+}
+
+int get_port(const char input[]) {
+    int cp = 0;
+    for (int i = 9; input[i] != '#'; ++i) {
+        cp += input[i] - 48;
+        cp *= 10;
+    }
+    cp /= 10;
+    return cp;
+}
+
 void chat_room(int port) {
 
     for (int i = 0; i < 5; ++i) {
-        printf("chatting in port %d\n",port);
+        printf("chatting in port %d\n", port);
     }
 }
