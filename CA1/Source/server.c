@@ -42,8 +42,6 @@ int main(int argc, char *argv[]) {
 
     write(1, "Server is running\n", 18);
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
     while (1) {
         working_set = master_set;
         select(max_sd + 1, &working_set, NULL, NULL, NULL);
@@ -55,7 +53,10 @@ int main(int argc, char *argv[]) {
                     new_socket = acceptClient(server_fd);
                     FD_SET(new_socket, &master_set);
                     if (new_socket > max_sd) max_sd = new_socket;
-                    printf("New client with file descriptor %d connected\n", new_socket);
+
+                    char output[BUFFER] = {0};
+                    sprintf(output, "New client with file descriptor %d connected\n", new_socket);
+                    write(1, output, strlen(output));
 
                     sprintf(buffer, "Hello from server, you're client %d\nPlease choose your category :\n"
                                     "1 - Computer\n2 - Electric\n3 - Civil\n4 - Mechanic\n", new_socket);
@@ -69,7 +70,10 @@ int main(int argc, char *argv[]) {
                     bytes_received = recv(i, buffer, BUFFER, 0);
 
                     if (bytes_received == 0) {
-                        printf("Client with file descriptor %d disconnected\n", i);
+                        char output[BUFFER] = {0};
+                        sprintf(output, "Client with file descriptor %d disconnected\n", i);
+                        write(1, output, strlen(output));
+
                         close(i);
                         FD_CLR(i, &master_set);
                         continue;
@@ -88,30 +92,30 @@ int main(int argc, char *argv[]) {
                         if (qa_file < 0) qa_file = open("QA.txt", O_CREAT | O_RDWR);
                         write(qa_file, buffer, strlen(buffer));
                         close(qa_file);
-                        memset(buffer, 0, BUFFER);
                     } else {
-                        printf("Client %d : %s", i, buffer);
-                        memset(buffer, 0, BUFFER);
+                        char output[BUFFER] = {0};
+                        sprintf(output, "Client %d : %s", i, buffer);
+                        write(1, output, strlen(output));
                     }
                 }
             }
         }
     }
-#pragma clang diagnostic pop
     return 0;
 }
 
 int acceptClient(int server_fd) {
-    int client_fd;
     struct sockaddr_in client_address;
     int address_len = sizeof(client_address);
-    client_fd = accept(server_fd, (struct sockaddr *) &client_address, (socklen_t *) &address_len);
+    int client_fd = accept(server_fd, (struct sockaddr *) &client_address, (socklen_t *) &address_len);
     return client_fd;
 }
 
 int setupServer(int s_port) {
 
-    printf("Starting server on port %d\n", s_port);
+    char output[BUFFER] = {0};
+    sprintf(output, "Starting server on port %d\n", s_port);
+    write(1, output, strlen(output));
 
     struct sockaddr_in address;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -158,14 +162,21 @@ void start_group(int group) {
     port++;
     room current = rooms[group].rooms[rooms[group].index];
     current.port = port;
-    printf("New chat in group %d started\n", group);
+
+    char chat[BUFFER] = {0};
+    sprintf(chat, "New chat in group %d started\n", group);
+    write(1, chat, strlen(chat));
+
     for (int i = 0; i < ROOM_SIZE; ++i) {
         char buffer[BUFFER] = {0};
         sprintf(buffer, "$YCISOP$#%d#*%d*%d*%d*%d*\n",
                 port, current.users[0], current.users[1], current.users[2], current.users[i]);
         send(current.users[i], buffer, strlen(buffer), 0);
         users[find_user(current.users[i])].stage = IN_CHAT;
-        printf("Port %d transmitted to client %d \n", port, current.users[i]);
+
+        char output[BUFFER] = {0};
+        sprintf(output, "Port %d transmitted to client %d \n", port, current.users[i]);
+        write(1, output, strlen(output));
     }
 
     rooms[group].index++;
