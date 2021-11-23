@@ -1,3 +1,4 @@
 CA1/*.out
-CA1/*.exe
 CA1/cmake-build-debug
+CA2/*.out
+CA2/cmake-build-debug
