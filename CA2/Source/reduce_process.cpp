@@ -1,7 +1,11 @@
-#include "header.h"
+#include <iostream>
 
 using namespace std;
 
-string test2() {
-    return "Hello";
+int main(int argc,char *argv[]){
+    cout<<"reduce"<<endl;
+    /*for (int i = 0; i <argc ; ++i) {
+        cout<<argv[i]<<endl;
+    }*/
+    return 0;
 }

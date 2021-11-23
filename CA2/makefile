@@ -1,23 +1,22 @@
 COMPILER = g++
-COMPILE = -c
-CF = -pedantic
-CC = ${COMPILER} ${COMPILE} ${CF}
+OPTION = -w
+CC = ${COMPILER}
 
-SOURCES := ${shell find * -type f -name "*.cpp"}
-OBJDIR  := Build
-OBJECTS := ${addprefix ${OBJDIR}/,${SOURCES:.cpp=.o}}
+SRC_DIR=Source
+BUILD_DIR=Build
 
-all: main.out
+all: main map reduce
 
-main.out: ${OBJECTS}
-	${COMPILER} ${CF} $^ -o $@
+main: ${SRC_DIR}/main_process.cpp
+	mkdir -p ${BUILD_DIR}
+	${CC} ${SRC_DIR}/main_process.cpp -o $@
 
-${OBJECTS}: ${OBJDIR}/%.o: %.cpp
-	mkdir -p ${@D}
-	${CC} $< -o $@
+map: ${SRC_DIR}/map_process.cpp
+	${CC} ${SRC_DIR}/map_process.cpp -o ${BUILD_DIR}/$@
 
--include $(OBJECTS:.o=.d)
+reduce: ${SRC_DIR}/reduce_process.cpp
+	${CC} ${SRC_DIR}/reduce_process.cpp -o ${BUILD_DIR}/$@
 
 clean:
-	rm main.out
-	rm -rfv Build
+	rm -f main
+	rm -rfv ${BUILD_DIR}
