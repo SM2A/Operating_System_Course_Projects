@@ -1,22 +1,46 @@
+#include <map>
+#include <fstream>
+#include <sstream>
 #include <iostream>
 #include <unistd.h>
-
 
 #define SIZE 10
 
 using namespace std;
 
-int main(int argc,char *argv[]){
+int main(int argc, char *argv[]) {
 
     int read_pipe = stoi(argv[1]);
-    cout<<"map : "<<read_pipe<<endl;
 
     char file_name[SIZE];
-    read(read_pipe,file_name,SIZE);
-    cout<<file_name<<endl;
+    read(read_pipe, file_name, SIZE);
     close(read_pipe);
 
+    map<string, int> words;
 
+    string line;
+    string file_path = "testcases/" + string(file_name) + ".csv";
+    ifstream file(file_path);
+
+    getline(file, line);
+    stringstream stream(line);
+
+    while (stream.good()) {
+        string word;
+        getline(stream, word, ',');
+        if (!word.empty()) {
+            auto iterator = words.find(word);
+            if (iterator == words.end()) words.insert(pair<string, int>(word, 1));
+            else iterator->second = (iterator->second + 1);
+        }
+    }
+
+    for (auto & word : words)
+        cout << word.first << " : " << word.second << endl;
+
+    cout << endl;
+
+    file.close();
 
     return 0;
 }
