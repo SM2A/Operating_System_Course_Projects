@@ -1,12 +1,15 @@
 #include <map>
 #include <fstream>
-#include <iostream>
-#include <sys/stat.h>
 #include <sstream>
+#include <iostream>
+#include <unistd.h>
+#include <sys/stat.h>
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
+
+    int write_pipe = stoi(argv[1]);
 
     char *fifo = (char *) "Build/my_fifo";
     mkfifo(fifo, 0666);
@@ -32,8 +35,10 @@ int main(int argc, char *argv[]) {
     fd.close();
 
     string text;
-    for (auto &word : words) text.append(word.first + " , " + to_string(word.second) + "\n");
-    cout << text << endl;
+    for (auto &word : words) text.append(word.first + ": " + to_string(word.second) + "\n");
+
+    write(write_pipe, text.c_str(), text.size()+1);
+    close(write_pipe);
 
     return 0;
 }
