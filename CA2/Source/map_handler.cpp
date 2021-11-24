@@ -1,6 +1,5 @@
 #include <iostream>
 #include <unistd.h>
-#include <sys/wait.h>
 
 using namespace std;
 
@@ -18,7 +17,7 @@ int main(int argc, char *argv[]) {
             write(_pipe_[1], to_string(i).c_str(), to_string(i).size());
             execv("./Build/map", map_handler);
             close(_pipe_[1]);
-        } else wait(NULL);
+        }
     }
 
     return 0;

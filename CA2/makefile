@@ -5,7 +5,7 @@ CC = ${COMPILER}
 SRC_DIR=Source
 BUILD_DIR=Build
 
-all: main map reduce map_handler
+all: clean main map reduce map_handler
 
 main: ${SRC_DIR}/main_process.cpp
 	mkdir -p ${BUILD_DIR}
