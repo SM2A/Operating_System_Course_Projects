@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
     sepia();
     washed_out();
     cross();
-    writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/serial/filtered.bmp",
+    writeOutBmp24(fileBuffer, "filtered.bmp",
                   bufferSize);
 
     auto done = chrono::high_resolution_clock::now();

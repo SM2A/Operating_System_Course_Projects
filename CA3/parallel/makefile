@@ -1,6 +1,7 @@
 COMPILER = g++
 VERSION = -std=c++11
-CC = ${COMPILER} ${VERSION}
+OPTION = -pthread
+CC = ${COMPILER} ${VERSION} ${OPTION}
 
 all: clean parallel
 
