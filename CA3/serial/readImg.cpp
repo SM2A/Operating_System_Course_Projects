@@ -175,6 +175,31 @@ void sepia() {
     }
 }
 
+unsigned char channel_avg(char channel) {
+    unsigned long long int result = 0;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            if (channel == 'r') result += image.r[i][j];
+            else if (channel == 'g') result += image.g[i][j];
+            else if (channel == 'b') result += image.b[i][j];
+        }
+    }
+    return result / (rows * cols);
+}
+
+void washed_out() {
+    unsigned char red = channel_avg('r');
+    unsigned char green = channel_avg('g');
+    unsigned char blue = channel_avg('b');
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            image.r[i][j] = (image.r[i][j] * 0.4) + (red * 0.6);
+            image.g[i][j] = (image.g[i][j] * 0.4) + (green * 0.6);
+            image.b[i][j] = (image.b[i][j] * 0.4) + (blue * 0.6);
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     char *fileBuffer;
     int bufferSize;
@@ -189,6 +214,7 @@ int main(int argc, char *argv[]) {
     getPixlesFromBMP24(bufferSize, fileBuffer);
     smoothing();
     sepia();
+    washed_out();
     writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/serial/filtered.bmp",
                   bufferSize);
 
