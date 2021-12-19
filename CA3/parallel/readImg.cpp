@@ -66,7 +66,7 @@ bool fillAndAllocate(char *&buffer, const char *fileName, int &rows, int &cols, 
   }
   else
   {
-    cout << "File" << fileName << " doesn't exist!" << endl;
+    cout << "File " << fileName << " doesn't exist!" << endl;
     return 0;
   }
 }

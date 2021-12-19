@@ -4,3 +4,5 @@ CA2/*.out
 CA2/cmake-build-debug
 CA2/Build
 CA2/main
+CA3/*.out
+CA3/cmake-build-debug
