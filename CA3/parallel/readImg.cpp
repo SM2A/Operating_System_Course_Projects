@@ -151,6 +151,7 @@ void *smoothing_r(void *) {
             image.r[i][j] = pixel_avg('r', i, j);
         }
     }
+    return nullptr;
 }
 
 void *smoothing_g(void *) {
@@ -159,6 +160,7 @@ void *smoothing_g(void *) {
             image.g[i][j] = pixel_avg('g', i, j);
         }
     }
+    return nullptr;
 }
 
 void *smoothing_b(void *) {
@@ -167,6 +169,7 @@ void *smoothing_b(void *) {
             image.b[i][j] = pixel_avg('b', i, j);
         }
     }
+    return nullptr;
 }
 
 void smoothing() {
@@ -186,6 +189,7 @@ void *sepia_r(void *) {
             else image.r[i][j] = red;
         }
     }
+    return nullptr;
 }
 
 void *sepia_g(void *) {
@@ -196,6 +200,7 @@ void *sepia_g(void *) {
             else image.g[i][j] = green;
         }
     }
+    return nullptr;
 }
 
 void *sepia_b(void *) {
@@ -207,6 +212,7 @@ void *sepia_b(void *) {
             else image.b[i][j] = blue;
         }
     }
+    return nullptr;
 }
 
 void sepia() {
@@ -246,29 +252,33 @@ void washed_out() {
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            image.r[i][j] = (image.r[i][j] * 0.4) + ((long)red * 0.6);
-            image.g[i][j] = (image.g[i][j] * 0.4) + ((long)green * 0.6);
-            image.b[i][j] = (image.b[i][j] * 0.4) + ((long)blue * 0.6);
+            image.r[i][j] = (image.r[i][j] * 0.4) + ((long) red * 0.6);
+            image.g[i][j] = (image.g[i][j] * 0.4) + ((long) green * 0.6);
+            image.b[i][j] = (image.b[i][j] * 0.4) + ((long) blue * 0.6);
         }
     }
 }
 
-void cross() {
+void *cross_main(void *) {
+    for (int i = 1; i < rows - 1; ++i) {
+        image.r[i][i] = 255;
+        image.g[i][i] = 255;
+        image.b[i][i] = 255;
+
+        image.r[i + 1][i] = 255;
+        image.g[i + 1][i] = 255;
+        image.b[i + 1][i] = 255;
+
+        image.r[i - 1][i] = 255;
+        image.g[i - 1][i] = 255;
+        image.b[i - 1][i] = 255;
+    }
+    return nullptr;
+}
+
+void *cross_side(void *) {
     for (int i = 1; i < rows - 1; ++i) {
         for (int j = 0; j < cols; ++j) {
-            if (i == j) {
-                image.r[i][j] = 255;
-                image.g[i][j] = 255;
-                image.b[i][j] = 255;
-
-                image.r[i + 1][j] = 255;
-                image.g[i + 1][j] = 255;
-                image.b[i + 1][j] = 255;
-
-                image.r[i - 1][j] = 255;
-                image.g[i - 1][j] = 255;
-                image.b[i - 1][j] = 255;
-            }
             if ((i + j) == rows) {
                 image.r[i][j] = 255;
                 image.g[i][j] = 255;
@@ -284,6 +294,14 @@ void cross() {
             }
         }
     }
+    return nullptr;
+}
+
+void cross() {
+    pthread_t threads[2];
+    pthread_create(&threads[0], nullptr, &cross_main, nullptr);
+    pthread_create(&threads[1], nullptr, &cross_side, nullptr);
+    for (unsigned long thread : threads) pthread_join(thread, nullptr);
 }
 
 int main(int argc, char *argv[]) {
@@ -302,12 +320,10 @@ int main(int argc, char *argv[]) {
     sepia();
     washed_out();
     cross();
-    writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/parallel/filtered.bmp",
-                  bufferSize);
+    writeOutBmp24(fileBuffer, "filtered.bmp", bufferSize);
 
     auto end = chrono::high_resolution_clock::now();
-    cout << chrono::duration_cast<chrono::milliseconds>(end - begin).count()
-         << " Milliseconds" << endl;
+    cout << chrono::duration_cast<chrono::milliseconds>(end - begin).count() << endl;
 
     return 0;
 }

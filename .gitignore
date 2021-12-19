@@ -6,4 +6,6 @@ CA2/Build
 CA2/main
 CA3/serial/*.out
 CA3/parallel/*.out
+CA3/serial/filtered.bmp
+CA3/parallel/filtered.bmp
 CA3/cmake-build-debug

@@ -1,6 +1,8 @@
 COMPILER = g++
 VERSION = -std=c++11
-CC = ${COMPILER} ${VERSION}
+OPTION = -w
+CC = ${COMPILER} ${VERSION} ${OPTION}
+
 
 all: clean serial
 

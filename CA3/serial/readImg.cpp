@@ -249,12 +249,10 @@ int main(int argc, char *argv[]) {
     sepia();
     washed_out();
     cross();
-    writeOutBmp24(fileBuffer, "filtered.bmp",
-                  bufferSize);
+    writeOutBmp24(fileBuffer, "filtered.bmp", bufferSize);
 
     auto done = chrono::high_resolution_clock::now();
-    cout << chrono::duration_cast<chrono::milliseconds>(done - started).count()
-         << " Milliseconds" << endl;
+    cout << chrono::duration_cast<chrono::milliseconds>(done - started).count() << endl;
 
     return 0;
 }
