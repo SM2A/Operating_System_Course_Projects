@@ -155,6 +155,26 @@ void smoothing() {
     }
 }
 
+void sepia() {
+    img_copy = image;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            int red = (img_copy.r[i][j] * 0.393) + (img_copy.g[i][j] * 0.769) + (img_copy.b[i][j] * 0.189);
+            int green = (img_copy.r[i][j] * 0.349) + (img_copy.g[i][j] * 0.686) + (img_copy.b[i][j] * 0.168);
+            int blue = (img_copy.r[i][j] * 0.272) + (img_copy.g[i][j] * 0.534) + (img_copy.b[i][j] * 0.131);
+
+            if (red >= 255) image.r[i][j] = 255;
+            else image.r[i][j] = red;
+
+            if (green >= 255) image.g[i][j] = 255;
+            else image.g[i][j] = green;
+
+            if (blue >= 255) image.b[i][j] = 255;
+            else image.b[i][j] = blue;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     char *fileBuffer;
     int bufferSize;
@@ -168,6 +188,7 @@ int main(int argc, char *argv[]) {
 
     getPixlesFromBMP24(bufferSize, fileBuffer);
     smoothing();
+    sepia();
     writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/serial/filtered.bmp",
                   bufferSize);
 
