@@ -200,6 +200,39 @@ void washed_out() {
     }
 }
 
+void cross() {
+    for (int i = 1; i < rows - 1; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            if (i == j) {
+                image.r[i][j] = 255;
+                image.g[i][j] = 255;
+                image.b[i][j] = 255;
+
+                image.r[i + 1][j] = 255;
+                image.g[i + 1][j] = 255;
+                image.b[i + 1][j] = 255;
+
+                image.r[i - 1][j] = 255;
+                image.g[i - 1][j] = 255;
+                image.b[i - 1][j] = 255;
+            }
+            if ((i + j) == rows) {
+                image.r[i][j] = 255;
+                image.g[i][j] = 255;
+                image.b[i][j] = 255;
+
+                image.r[i + 1][j] = 255;
+                image.g[i + 1][j] = 255;
+                image.b[i + 1][j] = 255;
+
+                image.r[i - 1][j] = 255;
+                image.g[i - 1][j] = 255;
+                image.b[i - 1][j] = 255;
+            }
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
     char *fileBuffer;
     int bufferSize;
@@ -215,6 +248,7 @@ int main(int argc, char *argv[]) {
     smoothing();
     sepia();
     washed_out();
+    cross();
     writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/serial/filtered.bmp",
                   bufferSize);
 
