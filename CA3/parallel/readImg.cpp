@@ -220,37 +220,37 @@ void sepia() {
 
 void *channel_avg(void *channel) {
     unsigned long long int result = 0;
+    long c = (long) channel;
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            if (*((char *) channel) == 'r') result += image.r[i][j];
-            else if (*((char *) channel) == 'g') result += image.g[i][j];
-            else if (*((char *) channel) == 'b') result += image.b[i][j];
+            if (c == 'r') result += image.r[i][j];
+            else if (c == 'g') result += image.g[i][j];
+            else if (c == 'b') result += image.b[i][j];
         }
     }
     return (void *) (result / (rows * cols));
 }
 
 void washed_out() {
-    char r = 'r', g = 'g', b = 'b';
     void *red, *green, *blue;
+    char r = 'r', g = 'g', b = 'b';
 
     pthread_t threads[3];
-    pthread_create(&threads[0], nullptr, &channel_avg, (void *) &r);
-    pthread_create(&threads[1], nullptr, &channel_avg, (void *) &g);
-    pthread_create(&threads[2], nullptr, &channel_avg, (void *) &b);
+    pthread_create(&threads[0], nullptr, &channel_avg, (void *) r);
+    pthread_create(&threads[1], nullptr, &channel_avg, (void *) g);
+    pthread_create(&threads[2], nullptr, &channel_avg, (void *) b);
 
-//    pthread_join(threads[0], (unsigned char)red);
-//
-//    for (unsigned long thread : threads) pthread_join(thread, nullptr);
-//
-//
-//    for (int i = 0; i < rows; ++i) {
-//        for (int j = 0; j < cols; ++j) {
-//            image.r[i][j] = (image.r[i][j] * 0.4) + (red * 0.6);
-//            image.g[i][j] = (image.g[i][j] * 0.4) + (green * 0.6);
-//            image.b[i][j] = (image.b[i][j] * 0.4) + (blue * 0.6);
-//        }
-//    }
+    pthread_join(threads[0], &red);
+    pthread_join(threads[1], &green);
+    pthread_join(threads[2], &blue);
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            image.r[i][j] = (image.r[i][j] * 0.4) + ((long)red * 0.6);
+            image.g[i][j] = (image.g[i][j] * 0.4) + ((long)green * 0.6);
+            image.b[i][j] = (image.b[i][j] * 0.4) + ((long)blue * 0.6);
+        }
+    }
 }
 
 void cross() {
@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
     char *fileBuffer;
     int bufferSize;
     char *fileName = argv[1];
-    auto started = chrono::high_resolution_clock::now();
+    auto begin = chrono::high_resolution_clock::now();
 
     if (!fillAndAllocate(fileBuffer, fileName, bufferSize)) {
         cout << "File read error" << endl;
@@ -305,8 +305,8 @@ int main(int argc, char *argv[]) {
     writeOutBmp24(fileBuffer, "/home/amin/CLionProjects/Operating_System_Course_Projects/CA3/parallel/filtered.bmp",
                   bufferSize);
 
-    auto done = chrono::high_resolution_clock::now();
-    cout << chrono::duration_cast<chrono::milliseconds>(done - started).count()
+    auto end = chrono::high_resolution_clock::now();
+    cout << chrono::duration_cast<chrono::milliseconds>(end - begin).count()
          << " Milliseconds" << endl;
 
     return 0;
