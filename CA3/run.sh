@@ -1,4 +1,4 @@
-count=1
+count=50
 s_sum=0
 p_sum=0
 make -C serial
